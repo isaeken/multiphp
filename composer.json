@@ -1,0 +1,10 @@
+{
+  "name": "isaeken/multiphp",
+  "description": "Multiple PHP environment helper for Windows",
+  "license": "MIT",
+  "homepage": "https://github.com/isaeken/multiphp",
+  "keywords": ["php", "environment", "multiple"],
+  "require": {
+    "minicli/minicli": "^2.0"
+  }
+}

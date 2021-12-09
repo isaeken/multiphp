@@ -1,0 +1,88 @@
+#!/usr/bin/env php
+<?php
+
+if (php_sapi_name() !== 'cli') {
+    exit;
+}
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Minicli\App;
+use Minicli\Command\CommandCall;
+use Minicli\Exception\CommandNotFoundException;
+use Minicli\Input;
+
+$app = new App([
+    'app_path' => __DIR__ . '/app/Command',
+    'theme' => '\Unicorn',
+    'debug' => false,
+]);
+
+$configFile = __DIR__ . "\\config.json";
+
+if (!file_exists($configFile)) {
+    $app->getPrinter()->display("Welcome to MultiPHP.");
+
+    $input = new Input("Your environment base directory: ");
+    $baseDirectory = $input->read();
+
+    $input = new Input("Your binary directory: ");
+    $binaryDirectory = $input->read();
+
+    file_put_contents($configFile, json_encode([
+        "base_directory" => $baseDirectory,
+        "binary_directory" => $binaryDirectory,
+    ]));
+
+    $app->getPrinter()->success("Configuration saved. Please rerun script.", true);
+    return;
+}
+
+$config = json_decode(file_get_contents($configFile));
+
+$baseDirectory = $config->base_directory . "\\";
+$binaryDirectory = $config->binary_directory . "\\";
+
+$supportedVersions = [
+    "7.3",
+    "7.4",
+    "8.0",
+    "8.1",
+];
+
+$app->registerCommand("change", function (CommandCall $test) use ($app, $baseDirectory, $binaryDirectory, $supportedVersions) {
+    $version = $test->getParam("version");
+    if (strlen($version) < 1) {
+        $app->getPrinter()->error("The argument 'version' is required!");
+        return;
+    }
+
+    if (!in_array($version, $supportedVersions)) {
+        $app->getPrinter()->error("The " . $version . " is unsupported!" . PHP_EOL ."Supported versions: " . implode(", ", $supportedVersions) . PHP_EOL, false);
+        return;
+    }
+
+    $path = $baseDirectory . $version . "\\php.exe";
+
+    if (!is_dir($binaryDirectory)) {
+        mkdir($binaryDirectory);
+    }
+
+    file_put_contents($binaryDirectory . "\\php.bat", "@echo OFF" . PHP_EOL . $path . " %*");
+    $app->getPrinter()->success("Environment is changed successfully.", true);
+});
+
+try {
+    $app->runCommand($argv);
+} catch (CommandNotFoundException $notFoundException) {
+    $app->getPrinter()->error("Command Not Found.");
+    return 1;
+} catch (Exception $exception) {
+    if ($app->config->debug) {
+        $app->getPrinter()->error("An error occurred:");
+        $app->getPrinter()->error($exception->getMessage());
+    }
+    return 1;
+}
+
+return 0;
