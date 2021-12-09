@@ -1,3 +1,3 @@
 @echo OFF
 setlocal DISABLEDELAYEDEXPANSION
-php multiphp %*
+php "%~dp0multiphp" %*
