@@ -64,6 +64,11 @@ $app->registerCommand("change", function (CommandCall $test) use ($app, $baseDir
 
     $path = $baseDirectory . $version . "\\php.exe";
 
+    if (!file_exists($path)) {
+        $app->getPrinter()->error("No executable php found in: " . $path . PHP_EOL);
+        return;
+    }
+
     if (!is_dir($binaryDirectory)) {
         mkdir($binaryDirectory);
     }
